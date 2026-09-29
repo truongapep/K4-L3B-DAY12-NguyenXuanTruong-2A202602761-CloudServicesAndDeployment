@@ -29,6 +29,8 @@ from .lifecycle import lifecycle
 from .logging_utils import log_event
 from .rate_limiter import RateLimiter
 from .store import ConversationStore, get_redis_client
+from pathlib import Path
+from fastapi.responses import FileResponse
 
 SERVICE_NAME = "day12-agent"
 SERVICE_VERSION = "1.0.0"
@@ -175,6 +177,13 @@ def ask(
         "tokens": {"in": result["tokens_in"], "out": result["tokens_out"]},
     }
 
+STATIC_DIR = Path(__file__).parent / "static"
+
+
+@app.get("/", include_in_schema=False)
+def home():
+    """Trang demo. Không cần xác thực, giống /health."""
+    return FileResponse(STATIC_DIR / "index.html")
 
 if __name__ == "__main__":
     import uvicorn

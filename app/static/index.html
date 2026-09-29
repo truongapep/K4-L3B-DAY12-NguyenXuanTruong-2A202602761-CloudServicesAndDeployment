@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Day 12 Agent — Demo</title>
+<style>
+:root{
+  --bg:#eef2f7; --surface:#fff; --ink:#16233b; --muted:#5d6b82; --line:#d8e0ec;
+  --accent:#2d5bff; --accent-ink:#fff; --ok:#12805c; --ok-bg:#e0f4ec;
+  --bad:#c93434; --bad-bg:#fbe5e5; --idle:#e6ebf3; --user:#16233b; --user-ink:#fff;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#0e1626; --surface:#16213a; --ink:#e8eefb; --muted:#93a1bd; --line:#26355a;
+  --accent:#6b8cff; --accent-ink:#0e1626; --ok:#4cd6a0; --ok-bg:#12352c;
+  --bad:#ff7b7b; --bad-bg:#3a1c22; --idle:#1f2c4a; --user:#2d3f6e; --user-ink:#fff;}
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+button,input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.app{max-width:1120px;margin:0 auto;padding:20px 16px 32px;
+  display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px}
+header{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;justify-content:space-between}
+h1{margin:0;font-size:1.6rem;letter-spacing:-.02em}
+h1 small{display:block;font-size:.95rem;font-weight:400;color:var(--muted);letter-spacing:0;margin-top:2px}
+.badges{display:flex;gap:8px}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:99px;
+  background:var(--idle);font-size:.85rem;color:var(--muted)}
+.badge i{width:9px;height:9px;border-radius:50%;background:var(--muted)}
+.badge.ok{background:var(--ok-bg);color:var(--ok)} .badge.ok i{background:var(--ok)}
+.badge.bad{background:var(--bad-bg);color:var(--bad)} .badge.bad i{background:var(--bad)}
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px}
+.chat{display:flex;flex-direction:column;height:min(74vh,680px);min-height:460px}
+.settings{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.settings label{display:block;font-size:.85rem;color:var(--muted);margin-bottom:4px}
+.settings input{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+.log{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
+.empty{margin:auto;text-align:center;color:var(--muted);max-width:340px}
+.empty b{color:var(--ink)}
+.msg{max-width:82%;padding:10px 14px;border-radius:14px;white-space:pre-wrap;word-wrap:break-word}
+.msg.user{align-self:flex-end;background:var(--user);color:var(--user-ink);border-bottom-right-radius:4px}
+.msg.bot{align-self:flex-start;background:var(--bg);border:1px solid var(--line);border-bottom-left-radius:4px}
+.msg.bot .meta{display:block;margin-top:6px;font-size:.8rem;color:var(--muted)}
+.msg.note{align-self:stretch;max-width:none;background:var(--bad-bg);color:var(--bad);border-radius:10px;font-size:.95rem}
+.msg.note.info{background:var(--ok-bg);color:var(--ok)}
+.msg.note b{display:block}
+.composer{display:flex;gap:10px;padding:12px 16px;border-top:1px solid var(--line)}
+.composer textarea{flex:1;resize:none;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);height:46px}
+.btn{border:0;border-radius:10px;padding:0 18px;background:var(--accent);color:var(--accent-ink);font-weight:600;cursor:pointer}
+.btn:disabled{opacity:.5;cursor:default}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line);padding:8px 12px;font-weight:500;text-align:left}
+.btn.ghost:hover:not(:disabled){border-color:var(--accent)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;padding:0 16px 12px}
+.chip{border:1px solid var(--line);background:transparent;border-radius:99px;padding:4px 12px;font-size:.88rem;cursor:pointer}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
+
+aside{display:flex;flex-direction:column;gap:16px}
+aside .panel{padding:16px}
+h2{margin:0 0 4px;font-size:1.05rem}
+.sub{margin:0 0 12px;color:var(--muted);font-size:.9rem}
+.gates{list-style:none;margin:0;padding:0}
+.gate{display:grid;grid-template-columns:34px 1fr;gap:10px;position:relative;padding-bottom:14px}
+.gate:last-child{padding-bottom:0}
+.gate::before{content:"";position:absolute;left:16px;top:34px;bottom:0;width:2px;background:var(--line)}
+.gate:last-child::before{display:none}
+.dot{width:34px;height:34px;border-radius:50%;background:var(--idle);color:var(--muted);
+  display:grid;place-items:center;font-weight:700;font-size:.85rem;transition:background .25s,color .25s,transform .25s}
+.gate.ok .dot{background:var(--ok);color:#fff;transform:scale(1.06)}
+.gate.bad .dot{background:var(--bad);color:#fff;transform:scale(1.06)}
+.gate strong{display:block;line-height:1.25}
+.gate span{font-size:.85rem;color:var(--muted)}
+.gate.bad span{color:var(--bad)}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{background:var(--bg);border-radius:10px;padding:10px 12px}
+.stat b{display:block;font-size:1.25rem;font-variant-numeric:tabular-nums}
+.stat span{font-size:.82rem;color:var(--muted)}
+.tests{display:grid;gap:8px}
+.tests .btn small{display:block;color:var(--muted);font-weight:400;font-size:.82rem}
+@media (max-width:860px){
+  .app{grid-template-columns:1fr}
+  .chat{height:70vh}
+  .settings{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){.dot{transition:none}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>Trợ lý AI có bảo vệ nhiều lớp<small>Mỗi câu hỏi phải đi qua 5 cổng kiểm tra trước khi có câu trả lời.</small></h1>
+    <div class="badges">
+      <span class="badge" id="b-health" title="/health: tiến trình còn sống không"><i></i>Sống</span>
+      <span class="badge" id="b-ready" title="/ready: đã nối được Redis chưa"><i></i>Redis</span>
+    </div>
+  </header>
+
+  <main class="panel chat">
+    <div class="settings">
+      <div><label for="key">Khóa API (chỉ giữ trong trang này)</label>
+        <input id="key" type="password" autocomplete="off" placeholder="Dán AGENT_API_KEY của bạn"></div>
+      <div><label for="uid">Tên người dùng (mỗi tên có trí nhớ riêng)</label>
+        <input id="uid" value="sv01" maxlength="40"></div>
+    </div>
+    <div class="log" id="log" aria-live="polite">
+      <div class="empty" id="empty"><b>Nhập khóa API rồi hỏi một câu.</b><br>
+        Thử hỏi hai câu liên tiếp: câu thứ hai sẽ cho thấy trợ lý nhớ câu thứ nhất.</div>
+    </div>
+    <div class="chips">
+      <button class="chip" data-q="Docker là gì?">Docker là gì?</button>
+      <button class="chip" data-q="Vì sao cần rate limit?">Vì sao cần rate limit?</button>
+      <button class="chip" data-q="Tôi vừa hỏi gì?">Tôi vừa hỏi gì?</button>
+    </div>
+    <div class="composer">
+      <textarea id="q" placeholder="Hỏi trợ lý điều gì đó…" maxlength="2000" aria-label="Câu hỏi"></textarea>
+      <button class="btn" id="send">Gửi câu hỏi</button>
+    </div>
+  </main>
+
+  <aside>
+    <section class="panel">
+      <h2>Hành trình của câu hỏi</h2>
+      <p class="sub" id="gate-sub">Gửi một câu hỏi để xem nó đi qua từng cổng.</p>
+      <ol class="gates" id="gates">
+        <li class="gate" data-i="0"><div class="dot">1</div><div><strong>Khóa API</strong><span>Bạn có phải người được phép?</span></div></li>
+        <li class="gate" data-i="1"><div class="dot">2</div><div><strong>Tốc độ</strong><span>Bạn có gửi quá nhanh không?</span></div></li>
+        <li class="gate" data-i="2"><div class="dot">3</div><div><strong>Ngân sách</strong><span>Tháng này còn tiền không?</span></div></li>
+        <li class="gate" data-i="3"><div class="dot">4</div><div><strong>Trí nhớ</strong><span>Đọc lại các câu trước từ Redis</span></div></li>
+        <li class="gate" data-i="4"><div class="dot">5</div><div><strong>Mô hình</strong><span>Sinh câu trả lời</span></div></li>
+      </ol>
+    </section>
+
+    <section class="panel">
+      <h2>Số liệu lượt gần nhất</h2>
+      <p class="sub">&nbsp;</p>
+      <div class="stats">
+        <div class="stat"><b id="s-hist">–</b><span>tin nhắn trước đó được nhớ</span></div>
+        <div class="stat"><b id="s-cost">–</b><span>chi phí lượt này (USD)</span></div>
+        <div class="stat"><b id="s-tok">–</b><span>token vào / ra</span></div>
+        <div class="stat"><b id="s-total">$0</b><span>tổng chi phí phiên này</span></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Thử các lớp bảo vệ</h2>
+      <p class="sub">Bấm để tận mắt thấy từng cổng chặn.</p>
+      <div class="tests">
+        <button class="btn ghost" id="t401">Gửi khi không có khóa<small>Kỳ vọng: bị chặn ở cổng 1 (401)</small></button>
+        <button class="btn ghost" id="t429">Gửi 12 câu liên tiếp<small>Kỳ vọng: bị chặn ở cổng 2 (429)</small></button>
+        <button class="btn ghost" id="clear">Xóa khung chat<small>Trí nhớ trên Redis vẫn còn</small></button>
+      </div>
+    </section>
+  </aside>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const log = $("log"), gates = [...document.querySelectorAll(".gate")];
+let busy = false, total = 0;
+
+function add(cls, text, meta){
+  const e = $("empty"); if (e) e.remove();
+  const d = document.createElement("div"); d.className = "msg " + cls;
+  d.textContent = text;
+  if (meta){ const m = document.createElement("span"); m.className = "meta"; m.textContent = meta; d.appendChild(m); }
+  log.appendChild(d); log.scrollTop = log.scrollHeight; return d;
+}
+function note(title, body, info){
+  const d = document.createElement("div"); d.className = "msg note" + (info ? " info" : "");
+  const b = document.createElement("b"); b.textContent = title; d.appendChild(b);
+  d.appendChild(document.createTextNode(body)); log.appendChild(d); log.scrollTop = log.scrollHeight;
+}
+
+function light(passed, failedAt, why){
+  gates.forEach(g => { g.className = "gate"; g.querySelector("span").dataset.orig ??= g.querySelector("span").textContent; g.querySelector("span").textContent = g.querySelector("span").dataset.orig; });
+  const steps = failedAt < 0 ? 5 : failedAt + 1;
+  for (let i = 0; i < steps; i++){
+    setTimeout(() => {
+      const bad = i === failedAt;
+      gates[i].classList.add(bad ? "bad" : "ok");
+      if (bad) gates[i].querySelector("span").textContent = why;
+    }, i * 120);
+  }
+  $("gate-sub").textContent = failedAt < 0 ? "Qua cả 5 cổng, câu trả lời đã được tạo." : "Bị chặn ở cổng " + (failedAt + 1) + ", các cổng sau không được chạy.";
+}
+
+const EXPLAIN = {
+  401: [0, "Khóa API thiếu hoặc sai", "Máy chủ từ chối vì khóa API không hợp lệ. Kiểm tra lại khóa ở ô phía trên."],
+  429: [1, "Bạn gửi quá nhanh", "Đã vượt giới hạn số câu hỏi mỗi phút. Chờ khoảng 60 giây rồi thử lại."],
+  402: [2, "Hết ngân sách tháng", "Người dùng này đã tiêu hết ngân sách của tháng, nên máy chủ không gọi mô hình nữa."]
+};
+
+async function ask(question, opts = {}){
+  const headers = {"Content-Type": "application/json", "X-User-Id": $("uid").value.trim() || "sv01"};
+  const key = $("key").value.trim();
+  if (key && !opts.noKey) headers["X-API-Key"] = key;
+  let res, data = {};
+  try {
+    res = await fetch("/ask", {method: "POST", headers, body: JSON.stringify({question})});
+    try { data = await res.json(); } catch(e){}
+  } catch(e){
+    return {status: 0, data: {}};
+  }
+  return {status: res.status, data};
+}
+
+function show(r, quiet){
+  if (r.status === 200){
+    const d = r.data;
+    add("bot", d.answer, "Nhớ " + d.history_length + " tin nhắn trước · " + d.tokens.in + " token vào, " + d.tokens.out + " token ra");
+    total += d.cost_usd;
+    $("s-hist").textContent = d.history_length;
+    $("s-cost").textContent = d.cost_usd.toFixed(6);
+    $("s-tok").textContent = d.tokens.in + " / " + d.tokens.out;
+    $("s-total").textContent = "$" + total.toFixed(6);
+    light(0, -1);
+  } else if (EXPLAIN[r.status]){
+    const [g, title, body] = EXPLAIN[r.status];
+    if (!quiet) note(title + " (mã " + r.status + ")", body);
+    light(0, g, "Bị chặn: mã " + r.status);
+  } else if (r.status === 422){
+    note("Câu hỏi chưa hợp lệ (mã 422)", "Câu hỏi không được để trống và tối đa 2000 ký tự.");
+  } else {
+    note("Không kết nối được máy chủ", "Kiểm tra máy chủ còn chạy không, rồi thử lại.");
+  }
+}
+
+async function send(text){
+  text = (text || $("q").value).trim();
+  if (!text || busy) return;
+  busy = true; $("send").disabled = true;
+  add("user", text); $("q").value = "";
+  show(await ask(text));
+  busy = false; $("send").disabled = false; $("q").focus();
+}
+
+$("send").onclick = () => send();
+$("q").addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey){ e.preventDefault(); send(); }});
+document.querySelectorAll(".chip").forEach(c => c.onclick = () => send(c.dataset.q));
+$("clear").onclick = () => { log.innerHTML = ""; note("Đã xóa khung chat", "Trợ lý vẫn nhớ hội thoại trên Redis. Đổi tên người dùng để bắt đầu trí nhớ mới.", true); };
+
+$("t401").onclick = async () => {
+  if (busy) return; busy = true;
+  add("user", "(gửi không kèm khóa API)");
+  show(await ask("xin chào", {noKey: true}));
+  busy = false;
+};
+$("t429").onclick = async () => {
+  if (busy) return;
+  if (!$("key").value.trim()){ note("Cần khóa API", "Nhập khóa hợp lệ trước, để các câu đầu qua được và bạn thấy lúc bị chặn.", false); return; }
+  busy = true; $("send").disabled = true;
+  const codes = [];
+  for (let i = 1; i <= 12; i++){
+    const r = await ask("câu thử số " + i);
+    codes.push(r.status);
+    if (r.status === 200){ total += r.data.cost_usd; }
+    if (r.status !== 200){ show(r, true); }
+  }
+  $("s-total").textContent = "$" + total.toFixed(6);
+  const ok = codes.filter(c => c === 200).length, blocked = codes.filter(c => c === 429).length;
+  note("Kết quả 12 câu liên tiếp", ok + " câu được trả lời (mã 200), " + blocked + " câu bị chặn (mã 429). Cửa sổ 60 giây tính từ thời điểm hiện tại, nên chờ một phút là gửi lại được.", blocked > 0);
+  busy = false; $("send").disabled = false;
+};
+
+async function probe(id, path){
+  const el = $(id);
+  try { const r = await fetch(path); el.className = "badge " + (r.ok ? "ok" : "bad"); }
+  catch(e){ el.className = "badge bad"; }
+}
+function refresh(){ probe("b-health", "/health"); probe("b-ready", "/ready"); }
+refresh(); setInterval(refresh, 15000);
+</script>
+</body>
+</html>
