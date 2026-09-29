@@ -10,9 +10,9 @@
 
 | Mục | Nội dung |
 |-----|----------|
-| Họ và tên | (điền họ tên) |
-| Mã học viên | (điền mã học viên) |
-| Repo | (điền link repo K4-L3B-DAY12-HoVaTen-MSSV-CloudServicesAndDeployment) |
+| Họ và tên | Nguyễn Xuân Trường |
+| Mã học viên | 2A202602761 |
+| Repo | https://github.com/truongapep/K4-L3B-DAY12-NguyenXuanTruong-2A202602761-CloudServicesAndDeployment.git |
 
 ## Service
 
