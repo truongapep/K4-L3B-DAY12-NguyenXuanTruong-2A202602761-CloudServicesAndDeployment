@@ -42,8 +42,8 @@ docker images | grep agent
 
 | Bản | Dung lượng |
 |-----|-----------|
-| 1 stage (bản đầu) | ... MB |
-| Multi-stage | ... MB |
+| 1 stage (bản đầu) | 850 MB |
+| Multi-stage | 271 MB |
 
 Giải thích: phần dung lượng chênh lệch đó là những gì?
 
