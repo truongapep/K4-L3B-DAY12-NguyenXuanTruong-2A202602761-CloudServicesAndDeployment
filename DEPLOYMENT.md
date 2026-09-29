@@ -18,22 +18,23 @@
 
 | Mục | Nội dung |
 |-----|----------|
-| Public URL | https://TODO-thay-bang-url-that.up.railway.app |
-| Platform | Railway / Render / Cloud Run — (điền platform bạn dùng) |
-| Ngày deploy | (điền ngày) |
+| Public URL | https://k4-l3b-day12-nguyenxuantruong-2a202602761-clouds-production.up.railway.app |
+| Platform | Railway |
+| Ngày deploy | 2026-09-29 |
 
 ## Biến Môi Trường Đã Set Trên Cloud
 
-Ghi tên biến và **nguồn giá trị**, không ghi giá trị:
+Ghi tên biến và nguồn giá trị, không ghi giá trị:
 
 | Biến | Đã set | Ghi chú |
 |------|--------|---------|
 | `PORT` | ✅ | platform tự gán |
 | `AGENT_API_KEY` | ✅ | đặt trong dashboard, không nằm trong repo |
-| `REDIS_URL` | ✅ | (điền: Redis add-on của platform / Upstash / ...) |
+| `REDIS_URL` | ✅ | Redis add-on của Railway |
 | `RATE_LIMIT_PER_MINUTE` | ✅ | 10 |
 | `MONTHLY_BUDGET_USD` | ✅ | 10.0 |
 | `LOG_LEVEL` | ✅ | INFO |
+
 
 ## Lệnh Kiểm Tra
 
@@ -73,7 +74,78 @@ done; echo
 Dán output của các lệnh trên vào đây:
 
 ```
-(điền output)
+(.venv) PS D:\BaiLab\lab12 Cloud\K4-L3B-Day12-NguyenXuanTruong-2A202602761-Cloud-Service-And-Deployment> curl.exe -i https://k4-l3b-day12-nguyenxuantruong-2a202602761-clouds-production.up.railway.app/health
+HTTP/1.1 200 OK
+Content-Type: application/json
+Date: Tue, 29 Sep 2026 04:40:11 GMT
+Server: railway-hikari
+x-railway-request-id: WqOdZO21SUCiP7NQn6XIxQ
+Content-Length: 57
+x-hikari-trace: hkg1.hn7d
+x-railway-edge: hkg1
+Connection: keep-alive
+
+{"status":"ok","service":"day12-agent","version":"1.0.0"}
+(.venv) PS D:\BaiLab\lab12 Cloud\K4-L3B-Day12-NguyenXuanTruong-2A202602761-Cloud-Service-And-Deployment> curl.exe -i https://k4-l3b-day12-nguyenxuantruong-2a202602761-clouds-production.up.railway.app/ready 
+HTTP/1.1 200 OK
+Content-Type: application/json
+Date: Tue, 29 Sep 2026 04:40:31 GMT
+Server: railway-hikari
+x-railway-request-id: VxlCLSwPSB6RQLWnxtoGcA
+Content-Length: 31
+x-hikari-trace: sin1.hs0s
+x-railway-edge: sin1
+Connection: keep-alive
+
+{"status":"ready","redis":true}
+
+(.venv) PS D:\BaiLab\lab12 Cloud\K4-L3B-Day12-NguyenXuanTruong-2A202602761-Cloud-Service-And-Deployment> try {
+>>     Invoke-RestMethod -Uri "$URL/ask" -Method Post -ContentType "application/json" -Body '{"question":"Hello"}'
+>> } catch {
+>>     $_.Exception.Response.StatusCode.Value__
+>> }
+401
+
+(.venv) PS D:\BaiLab\lab12 Cloud\K4-L3B-Day12-NguyenXuanTruong-2A202602761-Cloud-Service-And-Deployment> $headers = @{                      
+>>     "X-API-Key" = $AGENT_API_KEY                                        
+>>     "X-User-Id" = "sv-test"
+>> }
+>> $body = '{"question":"Deploy la gi?"}'
+>> 
+>> Invoke-RestMethod -Uri "$URL/ask" -Method Post -ContentType "application/json" -Headers $headers -Body $body
+
+
+answer         : Ngáº¯n gá»n: Deploy la gi phá»¥ thuá»c vÃo ba yáº¿u tá» â cáº¥u hÃ¬nh qua biáº¿n mÃ´i trÆ°á»á» 
+                 orchestrator biáº¿t tráº¡ng thÃ¡i, vÃ giá» háº¡n tÃi nguyÃªn.
+user_id        : sv-test
+history_length : 0
+cost_usd       : 2.265E-05
+tokens         : @{in=3; out=37}
+
+
+
+(.venv) PS D:\BaiLab\lab12 Cloud\K4-L3B-Day12-NguyenXuanTruong-2A202602761-Cloud-Service-And-Deployment> 
+
+(.venv) PS D:\BaiLab\lab12 Cloud\K4-L3B-Day12-NguyenXuanTruong-2A202602761-Cloud-Service-And-Deployment> $headers = @{
+>>     "X-API-Key" = $AGENT_API_KEY                                                                                                         
+>>     "X-User-Id" = "sv-test"                                                                                                              
+>> }                                                                                                                                        
+>> $body = '{"question":"test"}'                                                                                                            
+>> 
+>> 1..15 | ForEach-Object {
+>>     try {
+>>         $res = Invoke-WebRequest -Uri "$URL/ask" -Method Post -ContentType "application/json" -Headers $headers -Body $body -UseBasicParsing
+>>         Write-Host "$($res.StatusCode) " -NoNewline
+>>     } catch {
+>>         if ($_.Exception.Response) {
+>>             Write-Host "$([int]$_.Exception.Response.StatusCode) " -NoNewline
+>>         } else {
+>>             Write-Host "Err " -NoNewline
+>>         }
+>>     }
+>> }; Write-Host ""
+200 200 200 200 200 200 200 200 200 200 429 429 429 429 429 
+(.venv) PS D:\BaiLab\lab12 Cloud\K4-L3B-Day12-NguyenXuanTruong-2A202602761-Cloud-Service-And-Deployment> 
 ```
 
 ## Ảnh Chụp Màn Hình
@@ -85,17 +157,3 @@ Dán output của các lệnh trên vào đây:
 
 ---
 
-## Nếu Dùng Phương Án Dự Phòng
-
-Không đăng ký được tài khoản cloud? Vẫn nộp được bài, nhưng CP5 tối đa 60% điểm:
-
-1. Đặt `LOCAL_FALLBACK=true` trong `.env`
-2. Chạy `docker compose up -d` rồi kiểm tra `docker compose ps`
-3. Chụp màn hình vào `screenshots/`
-4. Chạy `pytest tests/test_cp5.py -v` — bộ test sẽ tự chuyển sang kiểm tra
-   `http://localhost:8000`
-5. Ghi rõ lý do không deploy được vào phần dưới đây:
-
-```
-(điền lý do nếu dùng phương án dự phòng, ngược lại xóa mục này)
-```
